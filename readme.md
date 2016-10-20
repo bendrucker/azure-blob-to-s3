@@ -1,0 +1,61 @@
+# azure-blob-to-s-3 [![Build Status](https://travis-ci.org/bendrucker/azure-blob-to-s-3.svg?branch=master)](https://travis-ci.org/bendrucker/azure-blob-to-s-3)
+
+> Batch copy files from Azure Blob Storage to Amazon S3
+
+
+## Install
+
+```
+$ npm install --save azure-blob-to-s-3
+```
+
+
+## Usage
+
+```js
+var toS3 = require('azure-blob-to-s-3')
+
+toS3({
+  azure: {
+    connection: '',
+    container: 'my-container'
+  },
+  aws: {
+    region: 'us-west-2',
+    bucket: 'my-bucket'
+  }
+})
+```
+
+## API
+
+#### `toS3(options)` -> `output`
+
+Copys files from Azure Blob Storage to AWS S3.
+
+##### options
+
+*Required*  
+Type: `object`
+
+Options for configuring the copy.
+
+###### concurrency
+
+Type: `number`  
+Default: `100`
+
+The maximum number of files to concurrently stream from Azure and into S3.
+
+##### azure
+
+Type: `object`  
+
+##### aws
+
+Type: `object`
+
+
+## License
+
+MIT © [Ben Drucker](http://bendrucker.me)
