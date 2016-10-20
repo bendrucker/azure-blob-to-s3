@@ -35,7 +35,7 @@ toS3({
 azure-s3 \
   --concurrency 10 \
   --azure-connection "..." \
-  --azure-container my-container
+  --azure-container my-container \
   --aws-bucket my-bucket
 ```
 
