@@ -12,6 +12,8 @@ $ npm install --save azure-blob-to-s3
 
 ## Usage
 
+### API
+
 ```js
 var toS3 = require('azure-blob-to-s3')
 
@@ -25,6 +27,16 @@ toS3({
     bucket: 'my-bucket'
   }
 })
+```
+
+### CLI
+
+```sh
+azure-s3 \
+  --concurrency 10 \
+  --azure-connection "..." \
+  --azure-container my-container
+  --aws-bucket my-bucket
 ```
 
 ## API
@@ -54,7 +66,6 @@ Type: `object`
 ##### aws
 
 Type: `object`
-
 
 ## License
 
