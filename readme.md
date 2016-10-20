@@ -1,4 +1,4 @@
-# azure-blob-to-s-3 [![Build Status](https://travis-ci.org/bendrucker/azure-blob-to-s-3.svg?branch=master)](https://travis-ci.org/bendrucker/azure-blob-to-s-3)
+# azure-blob-to-s3 [![Build Status](https://travis-ci.org/bendrucker/azure-blob-to-s3.svg?branch=master)](https://travis-ci.org/bendrucker/azure-blob-to-s3)
 
 > Batch copy files from Azure Blob Storage to Amazon S3
 
@@ -6,14 +6,14 @@
 ## Install
 
 ```
-$ npm install --save azure-blob-to-s-3
+$ npm install --save azure-blob-to-s3
 ```
 
 
 ## Usage
 
 ```js
-var toS3 = require('azure-blob-to-s-3')
+var toS3 = require('azure-blob-to-s3')
 
 toS3({
   azure: {
