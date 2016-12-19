@@ -3,7 +3,7 @@
 const assert = require('assert')
 const azure = require('azure-storage')
 const BlobList = require('azure-blob-list-stream')
-const aws = require('aws-sdk')
+const S3 = require('aws-sdk/clients/s3')
 const RetryStream = require('retry-stream-proxy')
 const through = require('through2')
 const bole = require('bole')
@@ -20,7 +20,7 @@ function copy (options) {
   assert(options.aws, 'aws config is required')
 
   const blob = azure.createBlobService(options.azure.connection)
-  const s3 = new aws.S3({
+  const s3 = new S3({
     region: options.aws.region,
     accessKeyId: options.aws.accessKeyId,
     secretAccessKey: options.aws.secretAccessKey,
@@ -37,13 +37,15 @@ function copy (options) {
     }))
     .pipe(through.obj({highWaterMark: options.concurrency || 100}, function (file, enc, callback) {
       s3.headObject({Key: file.name}, function (err, object) {
-        if (err) return callback(err)
+        if (err && err.code !== 'NotFound') return callback(err)
 
-        log.s3.debug({message: 'head', object, filename: file.name})
+        if (object) {
+          log.s3.debug({message: 'head', object, filename: file.name})
 
-        if (file.contentLength === object.ContentLength) {
-          log.s3.debug({message: 'skip', filename: file.name})
-          return callback(null)
+          if (file.contentLength === object.ContentLength) {
+            log.s3.debug({message: 'skip', filename: file.name})
+            return callback(null)
+          }
         }
 
         const stream = new RetryStream(createBlobStream.bind(null, file.name), {
