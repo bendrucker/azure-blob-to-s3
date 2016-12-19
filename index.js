@@ -4,21 +4,20 @@ const assert = require('assert')
 const azure = require('azure-storage')
 const BlobList = require('azure-blob-list-stream')
 const aws = require('aws-sdk')
-const Queue = require('queue')
 const RetryStream = require('retry-stream-proxy')
-const EventEmitter = require('events')
+const through = require('through2')
+const bole = require('bole')
 
-module.exports = copy
+const log = {
+  azure: bole('azure'),
+  s3: bole('s3')
+}
+
+module.exports = Object.assign(copy, {log})
 
 function copy (options) {
   assert(options.azure, 'azure config is required')
   assert(options.aws, 'aws config is required')
-
-  const queue = Queue({
-    concurrency: options.concurrency || 100
-  })
-
-  const events = new EventEmitter()
 
   const blob = azure.createBlobService(options.azure.connection)
   const s3 = new aws.S3({
@@ -30,31 +29,33 @@ function copy (options) {
     }
   })
 
-  BlobList(blob, options.azure.container)
-    .on('data', function (file) {
-      queue.push(function (callback) {
-        const stream = new RetryStream(createBlobStream.bind(null, file), {
+  return BlobList(blob, options.azure.container)
+    .on('page', (page) => log.azure.info({message: 'page', page}))
+    .pipe(through.obj(function (file, enc, callback) {
+      log.azure.debug({message: 'file', file})
+      callback(null, file)
+    }))
+    .pipe(through.obj({highWaterMark: options.concurrency || 100}, function (file, enc, callback) {
+      s3.headObject({Key: file.name}, function (err, object) {
+        if (err) return callback(err)
+
+        log.s3.debug({message: 'head', object, filename: file.name})
+
+        if (file.contentLength === object.ContentLength) {
+          log.s3.debug({message: 'skip', filename: file.name})
+          return callback(null)
+        }
+
+        const stream = new RetryStream(createBlobStream.bind(null, file.name), {
           delay: 1000
         })
-        .on('error', (err) => events.emit('failed', {err, file}))
 
         s3.upload({Key: file.name, Body: stream}, callback)
       })
-    })
-    .once('end', function () {
-      events.emit('length', queue.length)
-      queue.start()
-    })
+    }))
+    .on('error', log.s3.error)
 
-  let index = 0
-  queue
-    .on('error', (err) => events.emit('error', err))
-    .on('success', (result) => events.emit('success', result, index++))
-    .on('end', () => events.emit('end'))
-
-  return events
-
-  function createBlobStream (file) {
-    return blob.createReadStream(options.azure.container, file.name)
+  function createBlobStream (filename) {
+    return blob.createReadStream(options.azure.container, filename)
   }
 }

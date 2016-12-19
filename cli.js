@@ -1,7 +1,8 @@
 'use srict'
 
 const meow = require('meow')
-const ora = require('ora')
+const Writable = require('stream').Writable
+const bole = require('bole')
 const copy = require('./')
 
 const cli = meow(`
@@ -21,6 +22,7 @@ const cli = meow(`
 
 const options = {
   concurrency: cli.flags.concurrency,
+  logLevel: cli.flags.logLevel,
   azure: {
     connection: cli.flags.azureConnection,
     container: cli.flags.azureContainer
@@ -33,34 +35,16 @@ const options = {
   }
 }
 
-const listSpinner = ora(`Listing contents of "${options.azure.container}" from Azure`).start()
+bole.output({
+  level: options.logLevel,
+  stream: process.stdout
+})
 
 copy(options)
-  .once('length', function (length) {
-    const size = length.toLocaleString()
-    listSpinner.text = listSpinner.text + ' (' + size + ' files)'
-    success(listSpinner)
-
-    let index = 0
-    const fileSpinner = ora('').start()
-    increment()
-
-    this.on('success', increment)
-    this.on('failed', console.error.bind(console))
-    this.on('error', console.error.bind(console))
-
-    function increment () {
-      index++
-      fileSpinner.text = `Uploading files (${index.toLocaleString()} / ${size}) to S3`
-
-      if (index + 1 === length) {
-        fileSpinner.text = `Uploaded ${size} files to S3 (${options.aws.bucket})`
-        success(fileSpinner)
-      }
-    }
-  })
-
-function success (spinner) {
-  spinner.color = 'green'
-  spinner.stopAndPersist('✔︎')
-}
+  .pipe(new Writable({
+    write: function (file, enc, callback) {
+      copy.log.s3.info({message: 'file', file})
+      callback()
+    },
+    objectMode: true
+  }))

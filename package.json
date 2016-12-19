@@ -37,11 +37,13 @@
   ],
   "dependencies": {
     "aws-sdk": "~2.6.10",
-    "azure-blob-list-stream": "~1.0.0",
+    "azure-blob-list-stream": "~1.1.0",
     "azure-storage": "~1.3.1",
+    "bole": "~3.0.2",
     "meow": "~3.7.0",
     "ora": "~0.3.0",
     "queue": "~4.0.0",
-    "retry-stream-proxy": "~0.2.2"
+    "retry-stream-proxy": "~0.2.2",
+    "through2": "~2.0.1"
   }
 }
