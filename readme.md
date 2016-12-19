@@ -70,6 +70,27 @@ The maximum number of files to concurrently stream from Azure and into S3. This 
 
 Type: `object`  
 
+###### connection
+
+*Required*  
+Type: `string`
+
+Azure Blob Storage connection string.
+
+###### container
+
+*Required*  
+Type: `string`
+
+Azure Blob Storage container name.
+
+###### token
+  
+Type: `string`  
+Default: `undefined`
+
+A page token where the file list operation will begin.
+
 ##### aws
 
 Type: `object`

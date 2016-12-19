@@ -25,7 +25,8 @@ const options = {
   logLevel: cli.flags.logLevel,
   azure: {
     connection: cli.flags.azureConnection,
-    container: cli.flags.azureContainer
+    container: cli.flags.azureContainer,
+    token: cli.flags.azureToken
   },
   aws: {
     bucket: cli.flags.awsBucket,

@@ -29,7 +29,7 @@ function copy (options) {
     }
   })
 
-  return BlobList(blob, options.azure.container)
+  return BlobList(blob, options.azure.container, options.azure.token)
     .on('page', (page) => log.azure.info({message: 'page', page}))
     .pipe(through.obj(function (file, enc, callback) {
       log.azure.debug({message: 'file', file})
