@@ -6,6 +6,7 @@ const BlobList = require('azure-blob-list-stream')
 const S3 = require('aws-sdk/clients/s3')
 const RetryStream = require('retry-stream-proxy')
 const through = require('through2')
+const Throttled = require('throttled-transform-stream').default
 const bole = require('bole')
 
 const log = {
@@ -19,6 +20,8 @@ function copy (options) {
   assert(options.azure, 'azure config is required')
   assert(options.aws, 'aws config is required')
 
+  if (!options.concurrency) options.concurrency = 100
+
   const blob = azure.createBlobService(options.azure.connection)
   const s3 = new S3({
     region: options.aws.region,
@@ -29,33 +32,39 @@ function copy (options) {
     }
   })
 
+  const ThrottledTransfer = Throttled.create(transfer, {
+    queriesPerSecond: options.concurrency
+  })
+
   return BlobList(blob, options.azure.container, options.azure.token)
     .on('page', (page) => log.azure.info({message: 'page', page}))
     .pipe(through.obj(function (file, enc, callback) {
       log.azure.debug({message: 'file', file})
       callback(null, file)
     }))
-    .pipe(through.obj({highWaterMark: options.concurrency || 100}, function (file, enc, callback) {
-      s3.headObject({Key: file.name}, function (err, object) {
-        if (err && err.code !== 'NotFound') return callback(err)
-
-        if (object) {
-          log.s3.debug({message: 'head', object, filename: file.name})
-
-          if (file.contentLength === object.ContentLength) {
-            log.s3.debug({message: 'skip', filename: file.name})
-            return callback(null)
-          }
-        }
-
-        const stream = new RetryStream(createBlobStream.bind(null, file.name), {
-          delay: 1000
-        })
-
-        s3.upload({Key: file.name, Body: stream}, callback)
-      })
-    }))
+    .pipe(new ThrottledTransfer({objectMode: true}))
     .on('error', log.s3.error)
+
+  function transfer (file, enc, callback) {
+    s3.headObject({Key: file.name}, function (err, object) {
+      if (err && err.code !== 'NotFound') return callback(err)
+
+      if (object) {
+        log.s3.debug({message: 'head', object, filename: file.name})
+
+        if (file.contentLength === object.ContentLength) {
+          log.s3.debug({message: 'skip', filename: file.name})
+          return callback(null)
+        }
+      }
+
+      const stream = new RetryStream(createBlobStream.bind(null, file.name), {
+        delay: 1000
+      })
+
+      s3.upload({Key: file.name, Body: stream}, callback)
+    })
+  }
 
   function createBlobStream (filename) {
     return blob.createReadStream(options.azure.container, filename)
