@@ -32,7 +32,7 @@ function copy (options) {
     }
   })
 
-  const ThrottledTransfer = Throttled.create(transfer, {
+  const ThrottledTransfer = Throttled.create(transfer, undefined, {
     queriesPerSecond: options.concurrency
   })
 
