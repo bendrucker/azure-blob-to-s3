@@ -1,4 +1,4 @@
-'use srict'
+'use strict'
 
 const meow = require('meow')
 const Writable = require('stream').Writable
