@@ -39,7 +39,7 @@ const options = {
 }
 
 bole.output({
-  level: options.logLevel,
+  level: options.logLevel || 'info',
   stream: process.stdout
 })
 
