@@ -35,8 +35,7 @@
     "tape": "^4.0.0"
   },
   "files": [
-    "index.js",
-    "test.js"
+    "*.js"
   ],
   "dependencies": {
     "aws-sdk": "~2.6.10",
