@@ -29,13 +29,13 @@ test('normal', function (t) {
       t.equal(typeof blob.createReadStream, 'function')
       t.equal(container, 'container')
 
-      return fromArray.obj(Object.keys(files).map(name => ({name})))
+      return fromArray.obj(Object.keys(files).map(name => ({ name })))
     },
     'aws-sdk/clients/s3': function (options) {
       t.ok(options)
       return {
         headObject: function (params, callback) {
-          callback(Object.assign(new Error('Not found'), {code: 'NotFound'}))
+          callback(Object.assign(new Error('Not found'), { code: 'NotFound' }))
         },
         upload: function (params, callback) {
           callback(null, {})
@@ -74,7 +74,7 @@ test('skip', function (t) {
       t.equal(typeof blob.createReadStream, 'function')
       t.equal(container, 'container')
 
-      return fromArray.obj(Object.keys(files).map(name => ({name, contentLength: '10'})))
+      return fromArray.obj(Object.keys(files).map(name => ({ name, contentLength: '10' })))
     },
     'aws-sdk/clients/s3': function (options) {
       t.ok(options)
