@@ -46,7 +46,7 @@ bole.output({
 copy(options)
   .pipe(new Writable({
     write: function (file, enc, callback) {
-      copy.log.s3.info({message: 'file', file})
+      copy.log.s3.info({ message: 'file', file })
       callback()
     },
     objectMode: true

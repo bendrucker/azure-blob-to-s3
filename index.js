@@ -14,7 +14,7 @@ const log = {
   s3: bole('s3')
 }
 
-module.exports = Object.assign(copy, {log})
+module.exports = Object.assign(copy, { log })
 
 function copy (options) {
   assert(options.azure, 'azure config is required')
@@ -37,23 +37,23 @@ function copy (options) {
   })
 
   return BlobList(blob, options.azure.container, options.azure.token)
-    .on('page', (page) => log.azure.info({message: 'page', page}))
+    .on('page', (page) => log.azure.info({ message: 'page', page }))
     .pipe(through.obj(function (file, enc, callback) {
-      log.azure.debug({message: 'file', file})
+      log.azure.debug({ message: 'file', file })
       callback(null, file)
     }))
-    .pipe(new ThrottledTransfer({objectMode: true}))
+    .pipe(new ThrottledTransfer({ objectMode: true }))
     .on('error', log.s3.error)
 
   function transfer (file, enc, callback) {
-    s3.headObject({Key: file.name}, function (err, object) {
+    s3.headObject({ Key: file.name }, function (err, object) {
       if (err && err.code !== 'NotFound') return callback(err)
 
       if (object) {
-        log.s3.debug({message: 'head', object, filename: file.name})
+        log.s3.debug({ message: 'head', object, filename: file.name })
 
         if (file.contentLength === object.ContentLength) {
-          log.s3.debug({message: 'skip', filename: file.name})
+          log.s3.debug({ message: 'skip', filename: file.name })
           return callback(null)
         }
       }
@@ -62,7 +62,7 @@ function copy (options) {
         delay: 1000
       })
 
-      s3.upload({Key: file.name, Body: stream}, callback)
+      s3.upload({ Key: file.name, Body: stream }, callback)
     })
   }
 
