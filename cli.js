@@ -33,8 +33,8 @@ const options = {
   aws: {
     bucket: cli.flags.awsBucket,
     region: cli.flags.awsRegion,
-    awsAccessKeyId: cli.flags.awsAccessKeyId,
-    awsSecretAccessKey: cli.flags.awsSecretAccessKey
+    accessKeyId: cli.flags.awsAccessKeyId,
+    secretAccessKey: cli.flags.awsSecretAccessKey
   }
 }
 
