@@ -81,7 +81,7 @@ test('skip', function (t) {
       return {
         headObject: function (params, callback) {
           callback(null, {
-            ContentLength: '10'
+            ContentLength: 10
           })
         },
         upload: () => t.fail('should not upload files')
