@@ -7,8 +7,9 @@
   * Uploads Azure binary data to S3 streamingly
 * Skips unnecessary uploads (files with a matching key and `Content-Length` already on S3)
 * Retries on (frequent) failed downloads from Azure
-* Generates [ndjson](http://ndjson.org/) logs for each network operation 
+* Generates [ndjson](http://ndjson.org/) logs for each network operation
 
+For large workloads (either number of files or bytes), you should run this from AWS in the same region where your bucket is located. This will minimize cost and offer reliable/fast/cheap uploads to S3. You will be billed per byte by Azure for [outbound data transfer](https://azure.microsoft.com/en-us/pricing/details/bandwidth/).
 
 ## Install
 
