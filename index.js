@@ -52,7 +52,7 @@ function copy (options) {
       if (object) {
         log.s3.debug({ message: 'head', object, filename: file.name })
 
-        if (file.contentLength === object.ContentLength) {
+        if (Number(file.contentLength) === Number(object.ContentLength)) {
           log.s3.debug({ message: 'skip', filename: file.name })
           return callback(null)
         }
