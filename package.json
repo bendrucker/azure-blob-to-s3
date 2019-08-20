@@ -43,7 +43,7 @@
     "azure-storage": "~2.10.2",
     "bole": "~3.0.2",
     "meow": "~5.0.0",
-    "ora": "~3.3.0",
+    "ora": "~3.4.0",
     "queue": "~6.0.0",
     "retry-stream-proxy": "~0.2.2",
     "throttled-transform-stream": "~1.0.0",
