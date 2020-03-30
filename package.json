@@ -38,7 +38,7 @@
     "*.js"
   ],
   "dependencies": {
-    "aws-sdk": "^2.355.0",
+    "aws-sdk": "^2.649.0",
     "azure-blob-list-stream": "~1.2.0",
     "azure-storage": "~2.10.2",
     "bole": "~4.0.0",
