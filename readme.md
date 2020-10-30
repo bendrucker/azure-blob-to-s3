@@ -1,4 +1,4 @@
-# azure-blob-to-s3 [![Build Status](https://travis-ci.org/bendrucker/azure-blob-to-s3.svg?branch=master)](https://travis-ci.org/bendrucker/azure-blob-to-s3) [![Greenkeeper badge](https://badges.greenkeeper.io/bendrucker/azure-blob-to-s3.svg)](https://greenkeeper.io/)
+# azure-blob-to-s3 [![tests](https://github.com/bendrucker/azure-blob-to-s3/workflows/tests/badge.svg)](https://github.com/bendrucker/azure-blob-to-s3/actions?query=workflow%3Atests)
 
 > Batch copy files from Azure Blob Storage to Amazon S3
 
