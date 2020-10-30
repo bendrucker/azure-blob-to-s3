@@ -48,5 +48,8 @@
     "retry-stream-proxy": "~0.2.2",
     "throttled-transform-stream": "~1.0.0",
     "through2": "~4.0.1"
+  },
+  "engines": {
+    "node": ">= 12"
   }
 }
