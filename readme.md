@@ -32,7 +32,8 @@ toS3({
   },
   aws: {
     region: 'us-west-2',
-    bucket: 'my-bucket'
+    bucket: 'my-bucket',
+    prefix: 'my-prefix'
   }
 })
 ```
@@ -44,7 +45,8 @@ azure-s3 \
   --concurrency 10 \
   --azure-connection "..." \
   --azure-container my-container \
-  --aws-bucket my-bucket
+  --aws-bucket my-bucket \
+  --aws-prefix my-prefix
 ```
 
 ## API

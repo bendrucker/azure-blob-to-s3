@@ -17,6 +17,7 @@ const cli = meow(`
     --azure-connection       Azure Blob Storage connection string
     --azure-container        Azure Blob Storage container name
     --aws-bucket             AWS S3 bucket name
+    --aws-prefix             (Optional) A string between an Amazon S3 bucket name and an object name, for example: bucket/prefix1/file
     --aws-region             AWS region for the bucket
     --aws-access-key-id      AWS IAM access key ID
     --aws-secret-access-key  AWS IAM access key secret
@@ -32,6 +33,7 @@ const options = {
   },
   aws: {
     bucket: cli.flags.awsBucket,
+    prefix: cli.flags.awsPrefix,
     region: cli.flags.awsRegion,
     accessKeyId: cli.flags.awsAccessKeyId,
     secretAccessKey: cli.flags.awsSecretAccessKey
