@@ -62,7 +62,10 @@ function copy (options) {
         delay: 1000
       })
 
-      s3.upload({ Key: file.name, Body: stream }, callback)
+      if (!options.aws.prefix) 
+        s3.upload({ Key: file.name, Body: stream }, callback)
+      else
+        s3.upload({ Key: `${options.aws.prefix}/${file.name}`, Body: stream }, callback)
     })
   }
 
