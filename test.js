@@ -97,3 +97,56 @@ test('skip', function (t) {
     }
   })
 })
+
+test('skip-with-prefix', function (t) {
+  t.plan(4)
+
+  const prefix = 'test-prefix'
+
+  const files = {
+    foo: 'bar',
+    bar: 'baz'
+  }
+
+  const copy = proxyquire('./', {
+    'azure-storage': {
+      createBlobService: function (connection) {
+        t.equal(connection, 'connection string')
+        return {
+          createReadStream: () => t.fail('should not read files')
+        }
+      }
+    },
+    'azure-blob-list-stream': function (blob, container) {
+      t.equal(typeof blob.createReadStream, 'function')
+      t.equal(container, 'container')
+
+      return fromArray.obj(Object.keys(files).map(name => ({ name, contentLength: '10' })))
+    },
+    'aws-sdk/clients/s3': function (options) {
+      t.ok(options)
+      return {
+        headObject: function (params, callback) {
+          if (params.Key.startsWith(prefix)) {
+            callback(null, {
+              ContentLength: 10
+            })
+          } else {
+            callback(null, null)
+          }
+        },
+        upload: () => t.fail('should not upload files')
+      }
+    }
+  })
+
+  copy({
+    aws: {
+      prefix: prefix
+    },
+    azure: {
+      connection: 'connection string',
+      container: 'container'
+    }
+  })
+})
