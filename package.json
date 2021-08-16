@@ -4,7 +4,7 @@
   "bin": {
     "azure-s3": "cli.js"
   },
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Batch copy files from Azure Blob Storage to Amazon S3",
   "license": "MIT",
   "repository": "bendrucker/azure-blob-to-s3",
