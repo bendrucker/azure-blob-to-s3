@@ -14,7 +14,7 @@
     "url": "https://www.bendrucker.me"
   },
   "scripts": {
-    "test": "standard && tape test.js"
+    "test": "standard && tape test.js && node cli.js --help"
   },
   "keywords": [
     "batch",
