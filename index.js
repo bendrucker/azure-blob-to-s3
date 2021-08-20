@@ -46,14 +46,15 @@ function copy (options) {
     .on('error', log.s3.error)
 
   function transfer (file, enc, callback) {
-    s3.headObject({ Key: file.name }, function (err, object) {
+    const dest = options.aws.prefix ? `${options.aws.prefix}/${file.name}` : file.name
+    s3.headObject({ Key: dest }, function (err, object) {
       if (err && err.code !== 'NotFound') return callback(err)
 
       if (object) {
-        log.s3.debug({ message: 'head', object, filename: file.name })
+        log.s3.debug({ message: 'head', object, filename: dest })
 
         if (Number(file.contentLength) === Number(object.ContentLength)) {
-          log.s3.debug({ message: 'skip', filename: file.name })
+          log.s3.debug({ message: 'skip', filename: dest })
           return callback(null)
         }
       }
@@ -62,10 +63,7 @@ function copy (options) {
         delay: 1000
       })
 
-      if (!options.aws.prefix) 
-        s3.upload({ Key: file.name, Body: stream }, callback)
-      else
-        s3.upload({ Key: `${options.aws.prefix}/${file.name}`, Body: stream }, callback)
+      s3.upload({ Key: dest, Body: stream }, callback)
     })
   }
 
