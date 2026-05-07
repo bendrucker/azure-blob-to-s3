@@ -47,7 +47,7 @@
     "queue": "^6.0.1",
     "retry-stream-proxy": "~0.2.2",
     "throttled-transform-stream": "^1.0.0",
-    "through2": "^4.0.2"
+    "through2": "^5.0.0"
   },
   "engines": {
     "node": ">= 12"
