@@ -1,7 +1,7 @@
 import { Readable } from 'node:stream'
 import { DefaultAzureCredential } from '@azure/identity'
 import { ContainerClient } from '@azure/storage-blob'
-import { S3Client, HeadObjectCommand, NotFound } from '@aws-sdk/client-s3'
+import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 
 export interface AzureOptions {
@@ -71,6 +71,9 @@ function defaultContainer (azure: AzureOptions): BlobContainer {
 
 export async function copy (options: CopyOptions): Promise<CopySummary> {
   const concurrency = options.concurrency ?? 100
+  if (!Number.isInteger(concurrency) || concurrency < 1) {
+    throw new RangeError('concurrency must be a positive integer')
+  }
 
   const container = options.azure.client ?? defaultContainer(options.azure)
 
@@ -158,7 +161,9 @@ export async function copy (options: CopyOptions): Promise<CopySummary> {
       const head = await s3.send(new HeadObjectCommand({ Bucket: options.aws.bucket, Key: key }))
       return size != null && head.ContentLength === size
     } catch (error) {
-      if (error instanceof NotFound) return false
+      // instanceof NotFound fails when aws.client comes from a different
+      // installed copy of @aws-sdk/client-s3, so match on the error name
+      if (error instanceof Error && error.name === 'NotFound') return false
       throw error
     }
   }

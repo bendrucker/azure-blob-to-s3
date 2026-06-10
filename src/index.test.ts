@@ -227,6 +227,21 @@ test('forwards the resume token and reports page continuation tokens', async () 
   ])
 })
 
+test('treats NotFound errors from another SDK copy as missing', async () => {
+  // simulates aws.client built from a separately installed @aws-sdk/client-s3,
+  // whose NotFound class fails instanceof checks against this package's copy
+  const error = new Error('NotFound')
+  error.name = 'NotFound'
+  s3.on(HeadObjectCommand).rejects(error)
+  s3.on(PutObjectCommand).resolves({})
+
+  const { container } = fakeContainer([[{ name: 'foo', contentLength: 3 }]])
+
+  const summary = await copy({ azure: { client: container }, aws })
+
+  assert.deepEqual(summary, { uploaded: 1, skipped: 0 })
+})
+
 test('rejects on non-NotFound head errors', async () => {
   s3.on(HeadObjectCommand).rejects(new Error('Access Denied'))
 
@@ -243,6 +258,14 @@ test('rejects on non-NotFound head errors', async () => {
 
 test('requires azure account and container without a client', async () => {
   await assert.rejects(copy({ azure: {}, aws }), TypeError)
+})
+
+test('rejects a non-positive concurrency', async () => {
+  const { container } = fakeContainer([[]])
+  await assert.rejects(
+    copy({ concurrency: 0, azure: { client: container }, aws }),
+    RangeError
+  )
 })
 
 test('bounds concurrent transfers', async () => {
