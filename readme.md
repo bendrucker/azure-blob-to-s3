@@ -20,6 +20,7 @@ Requires Node.js >= 22.18. This package is ESM-only.
 ## Breaking Changes in v2
 
 * ESM-only and requires Node.js >= 22.18.
+* The cloud SDKs handle authentication. Azure uses [`DefaultAzureCredential`](https://learn.microsoft.com/en-us/javascript/api/@azure/identity/defaultazurecredential) against the storage account URL, so `azure.account` replaces `azure.connection`. AWS uses the SDK's default credential provider chain, and v2 drops the `accessKeyId`/`secretAccessKey` options and flags.
 * `copy()` returns a `Promise` of a summary instead of a stream. Progress arrives through the `onProgress` callback.
 * `concurrency` caps the number of simultaneous transfers. In v1 it throttled new transfers per second.
 * `azure.token` is now the opaque continuation string from a `page` progress event. v1 token objects are not compatible.
@@ -35,7 +36,7 @@ import { copy } from 'azure-blob-to-s3'
 
 const summary = await copy({
   azure: {
-    connection: '',
+    account: 'my-account',
     container: 'my-container'
   },
   aws: {
@@ -55,7 +56,7 @@ const summary = await copy({
 ```sh
 azure-s3 \
   --concurrency 10 \
-  --azure-connection "..." \
+  --azure-account my-account \
   --azure-container my-container \
   --aws-bucket my-bucket \
   --aws-prefix my-prefix
@@ -96,12 +97,12 @@ Called with a progress event object for each operation:
 *Required*
 Type: `object`
 
-###### connection
+###### account
 
 *Required*
 Type: `string`
 
-Azure Blob Storage connection string.
+Azure storage account name. Credentials are resolved by [`DefaultAzureCredential`](https://learn.microsoft.com/en-us/javascript/api/@azure/identity/defaultazurecredential): environment variables, workload identity, managed identity, or the Azure CLI.
 
 ###### container
 
@@ -139,13 +140,7 @@ A string between the bucket name and each object name, for example: `bucket/pref
 
 Type: `string`
 
-AWS region for the bucket. Falls back to the AWS SDK's default resolution.
-
-###### accessKeyId / secretAccessKey
-
-Type: `string`
-
-AWS IAM credentials. When omitted, the AWS SDK's default credential chain is used.
+AWS region for the bucket. Falls back to the AWS SDK's default resolution. Credentials always come from the SDK's default provider chain: environment variables, shared config, SSO, or IAM roles.
 
 ## License
 

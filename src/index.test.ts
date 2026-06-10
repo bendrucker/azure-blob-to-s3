@@ -13,7 +13,7 @@ beforeEach(() => {
   s3.reset()
 })
 
-const azure = { connection: 'connection string', container: 'container' }
+const azure = { account: 'account', container: 'container' }
 
 // lib-storage's Upload resolves the client region while computing the
 // endpoint even though send() is mocked, so tests must set one explicitly

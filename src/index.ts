@@ -1,10 +1,11 @@
 import { Readable } from 'node:stream'
+import { DefaultAzureCredential } from '@azure/identity'
 import { ContainerClient } from '@azure/storage-blob'
 import { S3Client, HeadObjectCommand, NotFound } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 
 export interface AzureOptions {
-  connection: string
+  account: string
   container: string
   token?: string
 }
@@ -13,8 +14,6 @@ export interface AwsOptions {
   bucket: string
   prefix?: string
   region?: string
-  accessKeyId?: string
-  secretAccessKey?: string
 }
 
 export type ProgressEvent =
@@ -61,14 +60,12 @@ export interface CopySummary {
 export async function copy (options: CopyOptions): Promise<CopySummary> {
   const concurrency = options.concurrency ?? 100
 
-  const container: BlobContainer = options.containerClient ??
-    new ContainerClient(options.azure.connection, options.azure.container)
+  const container: BlobContainer = options.containerClient ?? new ContainerClient(
+    `https://${options.azure.account}.blob.core.windows.net/${options.azure.container}`,
+    new DefaultAzureCredential()
+  )
 
-  const credentials = options.aws.accessKeyId != null && options.aws.secretAccessKey != null
-    ? { accessKeyId: options.aws.accessKeyId, secretAccessKey: options.aws.secretAccessKey }
-    : undefined
-
-  const s3 = new S3Client({ region: options.aws.region, credentials })
+  const s3 = new S3Client({ region: options.aws.region })
 
   const summary: CopySummary = { uploaded: 0, skipped: 0 }
   const inFlight = new Set<Promise<void>>()
