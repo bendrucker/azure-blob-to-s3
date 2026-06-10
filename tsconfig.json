@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "es2023",
+    "strict": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "types": ["node"],
+    "declaration": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}
