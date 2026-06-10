@@ -15,6 +15,10 @@ beforeEach(() => {
 
 const azure = { connection: 'connection string', container: 'container' }
 
+// lib-storage's Upload resolves the client region while computing the
+// endpoint even though send() is mocked, so tests must set one explicitly
+const aws = { bucket: 'bucket', region: 'us-east-1' }
+
 function notFound (): NotFound {
   return new NotFound({ message: 'NotFound', $metadata: {} })
 }
@@ -93,7 +97,7 @@ test('uploads blobs missing from S3', async () => {
 
   const summary = await copy({
     azure,
-    aws: { bucket: 'bucket' },
+    aws,
     containerClient: container,
     onProgress: (event) => events.push(event)
   })
@@ -126,7 +130,7 @@ test('skips blobs already on S3 with a matching size', async () => {
 
   const summary = await copy({
     azure,
-    aws: { bucket: 'bucket' },
+    aws,
     containerClient: container,
     onProgress: (event) => events.push(event)
   })
@@ -148,7 +152,7 @@ test('uploads blobs whose size differs from S3', async () => {
 
   const summary = await copy({
     azure,
-    aws: { bucket: 'bucket' },
+    aws,
     containerClient: container
   })
 
@@ -164,7 +168,7 @@ test('uploads blobs with an unknown size even when S3 has an empty object', asyn
 
   const summary = await copy({
     azure,
-    aws: { bucket: 'bucket' },
+    aws,
     containerClient: container
   })
 
@@ -180,7 +184,7 @@ test('ignores an empty aws prefix', async () => {
 
   await copy({
     azure,
-    aws: { bucket: 'bucket', prefix: '' },
+    aws: { ...aws, prefix: '' },
     containerClient: container
   })
 
@@ -196,7 +200,7 @@ test('applies the aws prefix to object keys', async () => {
 
   await copy({
     azure,
-    aws: { bucket: 'bucket', prefix: 'pre' },
+    aws: { ...aws, prefix: 'pre' },
     containerClient: container
   })
 
@@ -220,7 +224,7 @@ test('forwards the resume token and reports page continuation tokens', async () 
 
   await copy({
     azure: { ...azure, token: 'resume-token' },
-    aws: { bucket: 'bucket' },
+    aws,
     containerClient: container,
     onProgress: (event) => events.push(event)
   })
@@ -238,7 +242,7 @@ test('rejects on non-NotFound head errors', async () => {
   const { container, state } = fakeContainer([[{ name: 'foo', contentLength: 3 }]])
 
   await assert.rejects(
-    copy({ azure, aws: { bucket: 'bucket' }, containerClient: container }),
+    copy({ azure, aws, containerClient: container }),
     /Access Denied/
   )
 
@@ -256,7 +260,7 @@ test('bounds concurrent transfers', async () => {
   const summary = await copy({
     concurrency: 2,
     azure,
-    aws: { bucket: 'bucket' },
+    aws,
     containerClient: container
   })
 
