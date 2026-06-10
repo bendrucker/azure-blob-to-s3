@@ -22,7 +22,7 @@ Requires Node.js >= 22.18. This package is ESM-only.
 * ESM-only and requires Node.js >= 22.18.
 * The cloud SDKs handle authentication. Azure uses [`DefaultAzureCredential`](https://learn.microsoft.com/en-us/javascript/api/@azure/identity/defaultazurecredential) against the storage account URL, so `azure.account` replaces `azure.connection`. AWS uses the SDK's default credential provider chain, and v2 drops the `accessKeyId`/`secretAccessKey` options and flags. For anything custom, construct your own client and pass it as `azure.client` or `aws.client`.
 * `copy()` returns a `Promise` of a summary instead of a stream. Progress arrives through the `onProgress` callback.
-* `concurrency` caps the number of simultaneous transfers. In v1 it throttled new transfers per second.
+* `concurrency` caps the number of simultaneous transfers, with a default of 32 and `0` meaning unlimited. In v1 it throttled new transfers per second, defaulting to 100.
 * `azure.token` is now the opaque continuation string from a `page` progress event. v1 token objects are not compatible.
 * The copy fails fast: the first transfer error rejects the promise after in-flight transfers settle.
 * The library no longer logs. The CLI prints ndjson to stdout.
@@ -78,7 +78,7 @@ Options for configuring the copy.
 ###### concurrency
 
 Type: `number`
-Default: `100`
+Default: `32`
 
 The maximum number of files to concurrently stream from Azure into S3. Pass `0` to remove the limit.
 

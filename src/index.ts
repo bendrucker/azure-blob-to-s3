@@ -70,7 +70,7 @@ function defaultContainer (azure: AzureOptions): BlobContainer {
 }
 
 export async function copy (options: CopyOptions): Promise<CopySummary> {
-  const concurrency = options.concurrency ?? 100
+  const concurrency = options.concurrency ?? 32
   if (!Number.isInteger(concurrency) || concurrency < 0) {
     throw new RangeError('concurrency must be a non-negative integer')
   }
