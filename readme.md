@@ -80,7 +80,7 @@ Options for configuring the copy.
 Type: `number`
 Default: `100`
 
-The maximum number of files to concurrently stream from Azure into S3. Must be a positive integer.
+The maximum number of files to concurrently stream from Azure into S3. Pass `0` to remove the limit.
 
 ###### onProgress
 

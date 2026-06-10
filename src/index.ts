@@ -71,9 +71,10 @@ function defaultContainer (azure: AzureOptions): BlobContainer {
 
 export async function copy (options: CopyOptions): Promise<CopySummary> {
   const concurrency = options.concurrency ?? 100
-  if (!Number.isInteger(concurrency) || concurrency < 1) {
-    throw new RangeError('concurrency must be a positive integer')
+  if (!Number.isInteger(concurrency) || concurrency < 0) {
+    throw new RangeError('concurrency must be a non-negative integer')
   }
+  const limit = concurrency === 0 ? Infinity : concurrency
 
   const container = options.azure.client ?? defaultContainer(options.azure)
 
@@ -95,7 +96,7 @@ export async function copy (options: CopyOptions): Promise<CopySummary> {
       })
 
       for (const blob of page.segment.blobItems) {
-        while (inFlight.size >= concurrency) {
+        while (inFlight.size >= limit) {
           if (failure != null) break
           await Promise.race(inFlight)
         }

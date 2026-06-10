@@ -260,12 +260,29 @@ test('requires azure account and container without a client', async () => {
   await assert.rejects(copy({ azure: {}, aws }), TypeError)
 })
 
-test('rejects a non-positive concurrency', async () => {
+test('rejects a negative concurrency', async () => {
   const { container } = fakeContainer([[]])
   await assert.rejects(
-    copy({ concurrency: 0, azure: { client: container }, aws }),
+    copy({ concurrency: -1, azure: { client: container }, aws }),
     RangeError
   )
+})
+
+test('treats a zero concurrency as unlimited', async () => {
+  s3.on(HeadObjectCommand).rejects(notFound())
+  s3.on(PutObjectCommand).resolves({})
+
+  const blobs = ['a', 'b', 'c', 'd', 'e', 'f'].map((name) => ({ name, contentLength: 3 }))
+  const { container, state } = fakeContainer([blobs])
+
+  const summary = await copy({
+    concurrency: 0,
+    azure: { client: container },
+    aws
+  })
+
+  assert.deepEqual(summary, { uploaded: 6, skipped: 0 })
+  assert.equal(state.maxActive, 6)
 })
 
 test('bounds concurrent transfers', async () => {
