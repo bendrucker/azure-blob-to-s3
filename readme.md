@@ -20,7 +20,7 @@ Requires Node.js >= 22.18. This package is ESM-only.
 ## Breaking Changes in v2
 
 * ESM-only and requires Node.js >= 22.18.
-* The cloud SDKs handle authentication. Azure uses [`DefaultAzureCredential`](https://learn.microsoft.com/en-us/javascript/api/@azure/identity/defaultazurecredential) against the storage account URL, so `azure.account` replaces `azure.connection`. AWS uses the SDK's default credential provider chain, and v2 drops the `accessKeyId`/`secretAccessKey` options and flags.
+* The cloud SDKs handle authentication. Azure uses [`DefaultAzureCredential`](https://learn.microsoft.com/en-us/javascript/api/@azure/identity/defaultazurecredential) against the storage account URL, so `azure.account` replaces `azure.connection`. AWS uses the SDK's default credential provider chain, and v2 drops the `accessKeyId`/`secretAccessKey` options and flags. For anything custom, construct your own client and pass it as `azure.client` or `aws.client`.
 * `copy()` returns a `Promise` of a summary instead of a stream. Progress arrives through the `onProgress` callback.
 * `concurrency` caps the number of simultaneous transfers. In v1 it throttled new transfers per second.
 * `azure.token` is now the opaque continuation string from a `page` progress event. v1 token objects are not compatible.
@@ -99,17 +99,21 @@ Type: `object`
 
 ###### account
 
-*Required*
 Type: `string`
 
-Azure storage account name. Credentials are resolved by [`DefaultAzureCredential`](https://learn.microsoft.com/en-us/javascript/api/@azure/identity/defaultazurecredential): environment variables, workload identity, managed identity, or the Azure CLI.
+Azure storage account name. Required unless `client` is provided. Credentials are resolved by [`DefaultAzureCredential`](https://learn.microsoft.com/en-us/javascript/api/@azure/identity/defaultazurecredential): environment variables, workload identity, managed identity, or the Azure CLI.
 
 ###### container
 
-*Required*
 Type: `string`
 
-Azure Blob Storage container name.
+Azure Blob Storage container name. Required unless `client` is provided.
+
+###### client
+
+Type: [`ContainerClient`](https://learn.microsoft.com/en-us/javascript/api/@azure/storage-blob/containerclient)
+
+Your own container client, for custom credentials, retry policies, or endpoints. When provided, `account` and `container` are unused.
 
 ###### token
 
@@ -140,7 +144,13 @@ A string between the bucket name and each object name, for example: `bucket/pref
 
 Type: `string`
 
-AWS region for the bucket. Falls back to the AWS SDK's default resolution. Credentials always come from the SDK's default provider chain: environment variables, shared config, SSO, or IAM roles.
+AWS region for the bucket. Falls back to the AWS SDK's default resolution. Credentials come from the SDK's default provider chain: environment variables, shared config, SSO, or IAM roles.
+
+###### client
+
+Type: [`S3Client`](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/s3/)
+
+Your own S3 client, for custom credentials, endpoints, or retry config. When provided, `region` is unused and you own the client's lifecycle (`copy()` only destroys clients it creates).
 
 ## License
 

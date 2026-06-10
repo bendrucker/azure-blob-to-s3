@@ -13,8 +13,6 @@ beforeEach(() => {
   s3.reset()
 })
 
-const azure = { account: 'account', container: 'container' }
-
 // lib-storage's Upload resolves the client region while computing the
 // endpoint even though send() is mocked, so tests must set one explicitly
 const aws = { bucket: 'bucket', region: 'us-east-1' }
@@ -96,9 +94,8 @@ test('uploads blobs missing from S3', async () => {
   const events: ProgressEvent[] = []
 
   const summary = await copy({
-    azure,
+    azure: { client: container },
     aws,
-    containerClient: container,
     onProgress: (event) => events.push(event)
   })
 
@@ -129,9 +126,8 @@ test('skips blobs already on S3 with a matching size', async () => {
   const events: ProgressEvent[] = []
 
   const summary = await copy({
-    azure,
+    azure: { client: container },
     aws,
-    containerClient: container,
     onProgress: (event) => events.push(event)
   })
 
@@ -151,9 +147,8 @@ test('uploads blobs whose size differs from S3', async () => {
   const { container, state } = fakeContainer([[{ name: 'foo', contentLength: 3 }]])
 
   const summary = await copy({
-    azure,
-    aws,
-    containerClient: container
+    azure: { client: container },
+    aws: { bucket: aws.bucket, client: new S3Client({ region: aws.region }) }
   })
 
   assert.deepEqual(summary, { uploaded: 1, skipped: 0 })
@@ -167,9 +162,8 @@ test('uploads blobs with an unknown size even when S3 has an empty object', asyn
   const { container, state } = fakeContainer([[{ name: 'foo' }]])
 
   const summary = await copy({
-    azure,
-    aws,
-    containerClient: container
+    azure: { client: container },
+    aws
   })
 
   assert.deepEqual(summary, { uploaded: 1, skipped: 0 })
@@ -183,9 +177,8 @@ test('ignores an empty aws prefix', async () => {
   const { container } = fakeContainer([[{ name: 'foo', contentLength: 3 }]])
 
   await copy({
-    azure,
-    aws: { ...aws, prefix: '' },
-    containerClient: container
+    azure: { client: container },
+    aws: { ...aws, prefix: '' }
   })
 
   const puts = s3.commandCalls(PutObjectCommand)
@@ -199,9 +192,8 @@ test('applies the aws prefix to object keys', async () => {
   const { container } = fakeContainer([[{ name: 'foo', contentLength: 3 }]])
 
   await copy({
-    azure,
-    aws: { ...aws, prefix: 'pre' },
-    containerClient: container
+    azure: { client: container },
+    aws: { ...aws, prefix: 'pre' }
   })
 
   const heads = s3.commandCalls(HeadObjectCommand)
@@ -223,9 +215,8 @@ test('forwards the resume token and reports page continuation tokens', async () 
   const events: ProgressEvent[] = []
 
   await copy({
-    azure: { ...azure, token: 'resume-token' },
+    azure: { client: container, token: 'resume-token' },
     aws,
-    containerClient: container,
     onProgress: (event) => events.push(event)
   })
 
@@ -242,12 +233,16 @@ test('rejects on non-NotFound head errors', async () => {
   const { container, state } = fakeContainer([[{ name: 'foo', contentLength: 3 }]])
 
   await assert.rejects(
-    copy({ azure, aws, containerClient: container }),
+    copy({ azure: { client: container }, aws }),
     /Access Denied/
   )
 
   assert.deepEqual(state.downloads, [])
   assert.equal(s3.commandCalls(PutObjectCommand).length, 0)
+})
+
+test('requires azure account and container without a client', async () => {
+  await assert.rejects(copy({ azure: {}, aws }), TypeError)
 })
 
 test('bounds concurrent transfers', async () => {
@@ -259,9 +254,8 @@ test('bounds concurrent transfers', async () => {
 
   const summary = await copy({
     concurrency: 2,
-    azure,
-    aws,
-    containerClient: container
+    azure: { client: container },
+    aws
   })
 
   assert.deepEqual(summary, { uploaded: 6, skipped: 0 })

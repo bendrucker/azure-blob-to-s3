@@ -23,5 +23,6 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
-      - run: npm run build
-      - run: node dist/cli.js --help
+      - run: npm pack
+      - run: npm install --global ./azure-blob-to-s3-*.tgz
+      - run: azure-s3 --help

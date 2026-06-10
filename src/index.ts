@@ -5,15 +5,17 @@ import { S3Client, HeadObjectCommand, NotFound } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 
 export interface AzureOptions {
-  account: string
-  container: string
+  account?: string
+  container?: string
   token?: string
+  client?: BlobContainer
 }
 
 export interface AwsOptions {
   bucket: string
   prefix?: string
   region?: string
+  client?: S3Client
 }
 
 export type ProgressEvent =
@@ -49,7 +51,6 @@ export interface CopyOptions {
   azure: AzureOptions
   aws: AwsOptions
   onProgress?: (event: ProgressEvent) => void
-  containerClient?: BlobContainer
 }
 
 export interface CopySummary {
@@ -57,15 +58,24 @@ export interface CopySummary {
   skipped: number
 }
 
+function defaultContainer (azure: AzureOptions): BlobContainer {
+  const { account, container } = azure
+  if (account == null || container == null) {
+    throw new TypeError('azure.account and azure.container are required when azure.client is not provided')
+  }
+  return new ContainerClient(
+    `https://${account}.blob.core.windows.net/${container}`,
+    new DefaultAzureCredential()
+  )
+}
+
 export async function copy (options: CopyOptions): Promise<CopySummary> {
   const concurrency = options.concurrency ?? 100
 
-  const container: BlobContainer = options.containerClient ?? new ContainerClient(
-    `https://${options.azure.account}.blob.core.windows.net/${options.azure.container}`,
-    new DefaultAzureCredential()
-  )
+  const container = options.azure.client ?? defaultContainer(options.azure)
 
-  const s3 = new S3Client({ region: options.aws.region })
+  const ownsS3Client = options.aws.client == null
+  const s3 = options.aws.client ?? new S3Client({ region: options.aws.region })
 
   const summary: CopySummary = { uploaded: 0, skipped: 0 }
   const inFlight = new Set<Promise<void>>()
@@ -109,7 +119,7 @@ export async function copy (options: CopyOptions): Promise<CopySummary> {
 
     return summary
   } finally {
-    s3.destroy()
+    if (ownsS3Client) s3.destroy()
   }
 
   async function transfer (blob: BlobSummary): Promise<void> {
