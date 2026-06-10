@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { inspect } from 'node:util'
 import meow from 'meow'
 import { copy } from './index.ts'
 
@@ -63,7 +64,7 @@ try {
 } catch (error) {
   console.log(JSON.stringify({
     type: 'error',
-    message: error instanceof Error ? error.message : String(error)
+    message: error instanceof Error ? error.message : inspect(error)
   }))
   process.exitCode = 1
 }

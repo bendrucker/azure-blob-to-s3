@@ -4,9 +4,8 @@ import { Readable } from 'node:stream'
 import { setImmediate as tick } from 'node:timers/promises'
 import { mockClient } from 'aws-sdk-client-mock'
 import { S3Client, HeadObjectCommand, PutObjectCommand, NotFound } from '@aws-sdk/client-s3'
-import type { ContainerClient } from '@azure/storage-blob'
 import { copy } from './index.ts'
-import type { ProgressEvent } from './index.ts'
+import type { BlobContainer, ProgressEvent } from './index.ts'
 
 const s3 = mockClient(S3Client)
 
@@ -22,7 +21,7 @@ function notFound (): NotFound {
 
 interface FakeBlob {
   name: string
-  contentLength: number
+  contentLength?: number
 }
 
 interface FakeState {
@@ -33,7 +32,7 @@ interface FakeState {
   maxActive: number
 }
 
-function fakeContainer (pages: FakeBlob[][]): { container: ContainerClient, state: FakeState } {
+function fakeContainer (pages: FakeBlob[][]): { container: BlobContainer, state: FakeState } {
   const state: FakeState = {
     downloads: [],
     downloadOptions: [],
@@ -79,7 +78,7 @@ function fakeContainer (pages: FakeBlob[][]): { container: ContainerClient, stat
     }
   }
 
-  return { container: container as unknown as ContainerClient, state }
+  return { container, state }
 }
 
 test('uploads blobs missing from S3', async () => {
@@ -155,6 +154,38 @@ test('uploads blobs whose size differs from S3', async () => {
 
   assert.deepEqual(summary, { uploaded: 1, skipped: 0 })
   assert.deepEqual(state.downloads, ['foo'])
+})
+
+test('uploads blobs with an unknown size even when S3 has an empty object', async () => {
+  s3.on(HeadObjectCommand).resolves({ ContentLength: 0 })
+  s3.on(PutObjectCommand).resolves({})
+
+  const { container, state } = fakeContainer([[{ name: 'foo' }]])
+
+  const summary = await copy({
+    azure,
+    aws: { bucket: 'bucket' },
+    containerClient: container
+  })
+
+  assert.deepEqual(summary, { uploaded: 1, skipped: 0 })
+  assert.deepEqual(state.downloads, ['foo'])
+})
+
+test('ignores an empty aws prefix', async () => {
+  s3.on(HeadObjectCommand).rejects(notFound())
+  s3.on(PutObjectCommand).resolves({})
+
+  const { container } = fakeContainer([[{ name: 'foo', contentLength: 3 }]])
+
+  await copy({
+    azure,
+    aws: { bucket: 'bucket', prefix: '' },
+    containerClient: container
+  })
+
+  const puts = s3.commandCalls(PutObjectCommand)
+  assert.deepEqual(puts.map((put) => put.args[0].input.Key), ['foo'])
 })
 
 test('applies the aws prefix to object keys', async () => {

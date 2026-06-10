@@ -1,6 +1,5 @@
 import { Readable } from 'node:stream'
 import { ContainerClient } from '@azure/storage-blob'
-import type { BlobItem } from '@azure/storage-blob'
 import { S3Client, HeadObjectCommand, NotFound } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 
@@ -23,12 +22,35 @@ export type ProgressEvent =
   | { type: 'skip', key: string }
   | { type: 'upload', key: string, size: number }
 
+export interface BlobSummary {
+  name: string
+  properties: { contentLength?: number }
+}
+
+export interface BlobPage {
+  continuationToken?: string
+  segment: { blobItems: BlobSummary[] }
+}
+
+export interface BlobContainer {
+  listBlobsFlat: () => {
+    byPage: (settings?: { continuationToken?: string }) => AsyncIterable<BlobPage>
+  }
+  getBlobClient: (name: string) => {
+    download: (
+      offset?: number,
+      count?: number,
+      options?: { maxRetryRequests?: number }
+    ) => Promise<{ readableStreamBody?: NodeJS.ReadableStream }>
+  }
+}
+
 export interface CopyOptions {
   concurrency?: number
   azure: AzureOptions
   aws: AwsOptions
   onProgress?: (event: ProgressEvent) => void
-  containerClient?: ContainerClient
+  containerClient?: BlobContainer
 }
 
 export interface CopySummary {
@@ -39,7 +61,7 @@ export interface CopySummary {
 export async function copy (options: CopyOptions): Promise<CopySummary> {
   const concurrency = options.concurrency ?? 100
 
-  const container = options.containerClient ??
+  const container: BlobContainer = options.containerClient ??
     new ContainerClient(options.azure.connection, options.azure.container)
 
   const credentials = options.aws.accessKeyId != null && options.aws.secretAccessKey != null
@@ -93,9 +115,9 @@ export async function copy (options: CopyOptions): Promise<CopySummary> {
     s3.destroy()
   }
 
-  async function transfer (blob: BlobItem): Promise<void> {
-    const key = options.aws.prefix != null ? `${options.aws.prefix}/${blob.name}` : blob.name
-    const size = blob.properties.contentLength ?? 0
+  async function transfer (blob: BlobSummary): Promise<void> {
+    const key = options.aws.prefix ? `${options.aws.prefix}/${blob.name}` : blob.name
+    const size = blob.properties.contentLength
 
     if (await exists(key, size)) {
       summary.skipped++
@@ -121,13 +143,13 @@ export async function copy (options: CopyOptions): Promise<CopySummary> {
     }).done()
 
     summary.uploaded++
-    options.onProgress?.({ type: 'upload', key, size })
+    options.onProgress?.({ type: 'upload', key, size: size ?? 0 })
   }
 
-  async function exists (key: string, size: number): Promise<boolean> {
+  async function exists (key: string, size: number | undefined): Promise<boolean> {
     try {
       const head = await s3.send(new HeadObjectCommand({ Bucket: options.aws.bucket, Key: key }))
-      return head.ContentLength === size
+      return size != null && head.ContentLength === size
     } catch (error) {
       if (error instanceof NotFound) return false
       throw error
