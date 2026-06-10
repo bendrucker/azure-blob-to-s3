@@ -15,7 +15,7 @@ const cli = meow(`
       config, SSO, IAM roles).
 
   Options:
-    --concurrency      Maximum number of simultaneous transfers, 0 for unlimited (default: 32)
+    --concurrency      Maximum number of simultaneous transfers, 0 for unlimited (default: 30)
     --azure-account    Azure storage account name
     --azure-container  Azure Blob Storage container name
     --azure-token      Continuation token from a previous run's page output
